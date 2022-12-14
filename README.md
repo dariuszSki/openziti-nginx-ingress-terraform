@@ -1,60 +1,48 @@
 # nginx-guide
 
-# Simple Sidecar Solution
-## _The fastest way to secure your API with OpenZiti_
+# Nginx Module Solution
+## _The way to secure your API Gateway with [OpenZiti](https://github.com/openziti)_
 
-[![OpenZiti](misc/../../misc/images/bakedwithopenziti.png)](https://github.com/openziti)
+![Baked with Ziti](./files/bakedwithopenziti.png)
 
 ![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)
 
 ## Meal Prep Time!
 
-Here are all the ingredients you'll need to cook this meal. And don't worry, we'll explain the last 2. They're free!
+Here are all the ingredients you'll need to cook this meal.
 
 - Cook Time: 1 hour
 - Ingredients
   - This Repo!
-  - AWS Account and CLI Access
-  - Terraform >=1.0.1
-  - GNU Make
-  - Any Dockerized API (sample flask API included)
+  - Azure Account and CLI Access
+  - [OpenZiti Nginx Module Repo](https://github.com/openziti/ngx_ziti_module)
+  - [OpenZiti Golang SDK Repo](https://github.com/openziti/sdk-golang)
   - NetFoundry Teams Account (Free Tier!)
-  - Ziti Desktop Edge 
 ---
-Architecture:
+## Architecture:
+![NetFoundryApiGatewaySolution](./files/NginxModule.png)
 
-![NetfoundrySidecarSolution](../misc/images/netfoundry_simple_sidecar_solution.png)
-
-Zero Trust Access Level:
-
-![ZTHA](../misc/images/zt_trust_level_host.png)
+## Zero Trust Access Level:
+---
+ZTAA with ZTNA
+![ZTAA](./files/ZTAA.v2.png)
+![ZTAA](./files/ZTNA.v2.png)
 
 ---
 ## Prep Your Kitchen
-In order to do this demo, you will need an AWS account and permissions to create resources in that account via Terraform. You will also need a version of Terraform >=1.0.1. We suggest the latest version, as of the time of this tutorial we are using 1.3.2 https://www.terraform.io/downloads. You'll also need to ensure you have Make.
-
+In order to do this demo, you will need an Azure account and permissions to create resources in that account via ARM Templates. You will also need a version of [Azure Cli](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli). We suggest the latest version.
 Let's run 3 quick commands to ensure we have everything we need installed:
 ```
-> aws --version
-aws-cli/2.7.31 Python/3.10.6 Darwin/21.6.0 source/x86_64 prompt/off
-> aws sts get-caller-identity
+> az version
 {
-    "UserId": "AIDAXXXXXXXXXXXX",
-    "Account": "012345678910",
-    "Arn": "arn:aws:iam::012345678910:user/ziti.chef"
+  "azure-cli": "2.43.0",
+  "azure-cli-core": "2.43.0",
+  "azure-cli-telemetry": "1.0.8",
+  "extensions": {}
 }
-
-> Terraform --version
-Terraform v1.3.2
-
-> make --version
-GNU Make 3.81
 ```
-If you're sure you have **make** installed, you can simply run ```make versions``` to ensure you have what you need.
 
-Once you're sure you have proper permissions in AWS and you have a compatible version of Terraform and Make installed, go ahead and clone this repo.
-
-You will also need a "Hello World" API that can be deployed to AWS Fargate. We suggest that you start with the default image included in [variable.tf](terraform/variables.tf), but once that's working, feel free to replace it with whatever flavor of API you like!
+Once you're sure you have proper permissions in Azure and you have a compatible version of Azure Cli, go ahead and clone this repo.
 
 ---
 
