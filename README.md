@@ -198,6 +198,7 @@ Insufficient arguments provided
 Usage: ./curlz <serviceName> <identityFile>
 ```
 If you get the error like above, then the client app was built successfully
+
 ---
 
 ## Check Our Progress!
