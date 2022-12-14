@@ -1,5 +1,3 @@
-# nginx-guide
-
 # Nginx Module Solution
 ## _The way to secure your API Gateway with [OpenZiti](https://github.com/openziti)_
 
@@ -31,7 +29,7 @@ ZTAA with ZTNA
 ---
 ## Prep Your Kitchen
 In order to do this demo, you will need an Azure account and permissions to create resources in that account via ARM Templates. You will also need a version of [Azure Cli](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli). We suggest the latest version.
-Let's run 3 quick commands to ensure we have everything we need installed:
+Let's run quick commands to ensure we have everything we need installed:
 ```
 > az version
 {
