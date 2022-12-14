@@ -1,7 +1,7 @@
 # Nginx Module Solution
 ## _The way to secure your API Gateway with [OpenZiti](https://github.com/openziti)_
 
-![Baked with Ziti](./files/bakedwithopenziti.png)
+![Baked with Ziti](./files/images/bakedwithopenziti.png)
 
 ![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)
 
@@ -12,19 +12,20 @@ Here are all the ingredients you'll need to cook this meal.
 - Cook Time: 1 hour
 - Ingredients
   - This Repo!
-  - Azure Account and CLI Access
+  - Azure Subscription, Resource Group and CLI Access
   - [OpenZiti Nginx Module Repo](https://github.com/openziti/ngx_ziti_module)
   - [OpenZiti Golang SDK Repo](https://github.com/openziti/sdk-golang)
+  - [Go installed on the client](https://go.dev/doc/install) - v1.19 or later
   - NetFoundry Teams Account (Free Tier!)
 ---
 ## Architecture:
-![NetFoundryApiGatewaySolution](./files/NginxModule.png)
+![NetFoundryApiGatewaySolution](./files/images/NginxModule.png)
 
 ## Zero Trust Access Level:
 ---
 ZTAA with ZTNA
-![ZTAA](./files/ZTAA.v2.png)
-![ZTAA](./files/ZTNA.v2.png)
+![ZTAA](./files/images/ZTAA.v2.png)
+![ZTAA](./files/images/ZTNA.v2.png)
 
 ---
 ## Prep Your Kitchen
@@ -66,7 +67,7 @@ We'll name this policy **demo_edge_router_policy** and add the **#demo_edge_rout
 
 ![edgeRouterPolicyCreate](../misc/images/edge_router_policy_create.png)
 
-
+---
 
 ## Create Your First Identity
 
@@ -82,21 +83,122 @@ To enroll your demo_api_endpoint.jwt and get demo_api_endpoint.json as a return,
 
 ![enrollment](../misc/images/enrollment.png)
 
-## Deploy Your API
+---
 
-Now that we have enrolled our Identity with your OpenZiti fabric, we can go ahead and deploy our Terraform. The Terraform configuration included in this project will create the following resources (and their associated resources):
+## Deploy Your Nginx Server and AKS Cluster
 
-- VPC
-- 2 Subnets
-- IAM Roles required for ECS
-- ECS Cluster and Service
-- ECS Task including OpenZiti Tunneller (sidecar) and the demo Flask API
-- Security Group with no ingress
-- Secrets Manager Secret containing your enrollment certs
+Now that we have enrolled the Identities for Nginx Module and Client Go App with your OpenZiti fabric, we can go ahead and deploy the infrustructure in Azure using the ARM Templates. The templates included in this project will create the following resources (and their associated resources):
 
-Next we'll run the Terraform and place that secret in **AWS Secrets Manager** run ```Terraform Apply``` in the terraform directory or ```make terraform```. The secret demo_api_endpoint.json should already be included in the .gitignore, but now would be a good time to double check that you are not committing these certificates to your repository. In fact, once they are stored as a secret in AWS and encrypted with KMS (AES-256), it is best practice to delete the JSON object locally. ```make clean``` will remove these files for you. If you'd like to run all of these steps in one simple command, run ```make``` and it will chain all three of these commands along with the ```make versions``` command mentioned earlier to enroll your token with the controller, deploy the secret to AWS, deploy a new task with the new secret, and remove the secret from your file system.
+- Virtual Network
+- AKS Private Cluster with Azure CNI
+- Container Registry
+- Nginx Server
+- Security Group with only SSH port open to Internet
 
------
+You will need to set a few environmental variables. Deploy infrastructure by running the following commands:
+```bash
+export LOCATION='eastus' # preferably one that does not have any infrastructure
+export SUB_ID='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+export RG_NAME='resource group name' # preferable a new one for easy clean up after demo
+export SSH_PKEY='ssh public key'
+
+az login --use-device-code # using web browser if you don't have service principal access set up
+az login --service-principal -u $APP_ID -p $CLIENT_SECRET --tenant $TENANT_ID
+
+az deployment group create --name daksdeploy$LOCATION --subscription $SUB_ID --resource-group $RG_NAME --template-file files/azure/template.json --parameters files/azure/parameters.json -p location=$LOCATION acrResourceGroup=$RG_NAME adminPublicKey="$SSH_PKEY"
+```
+Wait for resources to be deployed successfully... Once completed, grab the AKS API FQDN and Nginx Server IP under "outputs" in the generated response as shown in the example below.
+```
+...
+"outputs": {
+      "aksApiFQDN": {
+        "type": "String",
+        "value": "akssand-695d32b9.0320c402-3193-454d-a593-d0a4ff6dbf5f.privatelink.eastus.azmk8s.io"
+      },
+      "nginxName1": {
+        "type": "String",
+        "value": "20.169.224.122"
+      }
+    },
+...
+
+```
+
+---
+
+## Build and Deploy Nginx Ziti Module
+Login to Nginx Server host using ssh.
+```bash
+ssh -i "ssh private key" ziggy@<nginx_server_public_ip>
+```
+Clone Ziti Nginx Module Repo in the ziggy home directory
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install libpcre3-dev  libz-dev cmake make libuv1-dev build-essential
+git clone https://github.com/openziti/ngx_ziti_module.git
+```
+Build the module
+```bash
+cd ngx_ziti_module/ll
+mkdir cmake-build
+cd cmake-build
+cmake ../
+make
+```
+Move built module to nginx's modules folder
+```bash
+sudo cp ngx_ziti_module.so /etc/nginx/modules/
+```
+Enable the ziti module in the configuration file. Just replace the existing content with the following data.
+```bash
+load_module modules/ngx_ziti_module.so;
+
+user  nginx;
+worker_processes  auto;
+
+error_log  /var/log/nginx/error.log debug;
+
+thread_pool ngx_ziti_tp threads=32 max_queue=65536;
+
+events {
+    worker_connections  1024;
+}
+
+ziti identity1 {
+    identity_file /home/ziggy/azure-nginx-01.json;
+
+    bind akssand-695d32b9.0320c402-3193-454d-a593-d0a4ff6dbf5f.privatelink.eastus.azmk8s.io {
+        upstream akssand-695d32b9.0320c402-3193-454d-a593-d0a4ff6dbf5f.privatelink.eastus.azmk8s.io:443;
+    }
+}
+```
+Restart the Nginx process.
+```bash
+sudo systemctl restart nginx.service
+```
+
+---
+## Build Client Go HTTP App
+
+Clone OpenZiti Golang SDK Repo on your client
+
+Note: Need to install gcc compiler if not already installed
+```bash
+git clone https://github.com/openziti/sdk-golang.git
+cd sdk-golang/example
+mkdir build
+go mod tidy
+go build -o build ./...
+```
+Test Client app
+```bash
+build/curlz
+Insufficient arguments provided
+
+Usage: ./curlz <serviceName> <identityFile>
+```
+If you get the error like above, then the client app was built successfully
+---
 
 ## Check Our Progress!
 
