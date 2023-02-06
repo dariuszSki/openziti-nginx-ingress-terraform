@@ -1,5 +1,5 @@
 # Nginx Module Solution
-## _The way to secure your API Gateway with [OpenZiti](https://github.com/openziti)_
+## _The way to secure the Azure AKS API Service with [OpenZiti](https://github.com/openziti)_ and NGINX
 
 ![Baked with Ziti](./files/images/bakedwithopenziti.png)
 
@@ -25,7 +25,6 @@ Here are all the ingredients you'll need to cook this meal.
 ---
 ZTAA with ZTNA
 ![ZTAA](./files/images/ZTAA.v2.png)
-![ZTAA](./files/images/ZTNA.v2.png)
 
 ---
 ## Prep Your Kitchen
@@ -75,16 +74,6 @@ Once you've created an account at NetFoundry.io, you'll need to create a [Ziti E
 
 ---
 
-## Enroll dark_api_endpoint
-
-In order for **Endpoint** to be enrolled into your OpenZiti fabric, you will need to enroll the .jwt token. This will return a .json token that contains mTLS certs that we will store as a secret in **AWS Secrets Manager** and will be enrolled to the fabric [Controller](###-controller).
-
-To enroll your demo_api_endpoint.jwt and get demo_api_endpoint.json as a return, run ```make enroll```. Now you should have ./identity_token_goes_here/dark_api_endpoint.json. If this JSON object is correctly generated, you've enrolled your **Endpoint** correctly (see image below)! 
-
-![enrollment](../misc/images/enrollment.png)
-
----
-
 ## Deploy Your Nginx Server and AKS Cluster
 
 Now that we have enrolled the Identities for Nginx Module and Client Go App with your OpenZiti fabric, we can go ahead and deploy the infrustructure in Azure using the ARM Templates. The templates included in this project will create the following resources (and their associated resources):
@@ -99,7 +88,7 @@ You will need to set a few environmental variables. Deploy infrastructure by run
 ```bash
 export LOCATION='eastus' # preferably one that does not have any infrastructure
 export SUB_ID='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-export RG_NAME='resource group name' # preferable a new one for easy clean up after demo
+export RG_NAME='resource group name' # preferably a new one for easy clean up after demo
 export SSH_PKEY='ssh public key'
 
 az login --use-device-code # using web browser if you don't have service principal access set up
@@ -108,8 +97,8 @@ az login --service-principal -u $APP_ID -p $CLIENT_SECRET --tenant $TENANT_ID
 az deployment group create --name daksdeploy$LOCATION --subscription $SUB_ID --resource-group $RG_NAME --template-file files/azure/template.json --parameters files/azure/parameters.json -p location=$LOCATION acrResourceGroup=$RG_NAME adminPublicKey="$SSH_PKEY"
 ```
 Wait for resources to be deployed successfully... Once completed, grab the AKS API FQDN and Nginx Server IP under "outputs" in the generated response as shown in the example below.
-```
-...
+
+```bash
 "outputs": {
       "aksApiFQDN": {
         "type": "String",
@@ -120,8 +109,6 @@ Wait for resources to be deployed successfully... Once completed, grab the AKS A
         "value": "20.169.224.122"
       }
     },
-...
-
 ```
 
 ---
@@ -134,22 +121,27 @@ ssh -i "ssh private key" ziggy@<nginx_server_public_ip>
 Clone Ziti Nginx Module Repo in the ziggy home directory
 ```bash
 sudo apt update && sudo apt upgrade -y
-sudo apt install libpcre3-dev  libz-dev cmake make libuv1-dev build-essential
+sudo apt install libpcre3-dev libz-dev cmake make libuv1-dev build-essential jq
 git clone https://github.com/openziti/ngx_ziti_module.git
 ```
 Build the module
 ```bash
-cd ngx_ziti_module/ll
+cd ngx_ziti_module/
 mkdir cmake-build
 cd cmake-build
 cmake ../
 make
 ```
-Move built module to nginx's modules folder
+Relocate the module to the Nginx's modules folder
 ```bash
 sudo cp ngx_ziti_module.so /etc/nginx/modules/
 ```
-Enable the ziti module in the configuration file. Just replace the existing content with the following data.
+Enable the ziti module in the configuration file. Just replace the existing content with 
+the following data.
+
+Note: The identity path points to the nginx directory. You will move the identiy file there after
+it is is created and enrolled. 
+
 ```bash
 load_module modules/ngx_ziti_module.so;
 
@@ -165,9 +157,9 @@ events {
 }
 
 ziti identity1 {
-    identity_file /home/ziggy/azure-nginx-01.json;
+    identity_file /etc/nginx/nginx-aks-id-01.json;
 
-    bind akssand-695d32b9.0320c402-3193-454d-a593-d0a4ff6dbf5f.privatelink.eastus.azmk8s.io {
+    bind nginx-aks-service-01 {
         upstream akssand-695d32b9.0320c402-3193-454d-a593-d0a4ff6dbf5f.privatelink.eastus.azmk8s.io:443;
     }
 }
@@ -178,12 +170,31 @@ sudo systemctl restart nginx.service
 ```
 
 ---
+
+## Enroll Nginx Ziti Module
+In order for **Module Endpoint** to be enrolled into OpenZiti fabric, you will need to enroll the .jwt token after the enpoint is created. The enrollment process will return xxx.json configuration file that contains mTLS certs. The, thsat json file woudl need to be moved to the nginx folder as shown in the nginx.conf file.
+
+Install Ziti Cli first.
+```bash
+wget $(curl -s https://api.github.com/repos/openziti/ziti/releases/latest | jq -r .assets[].browser_download_url | grep "linux-amd64")
+tar -xf $(curl -s https://api.github.com/repos/openziti/ziti/releases/latest | jq -r .assets[].name | grep "linux-amd64") 'ziti/ziti' --strip-components 1; rm $(curl -s https://api.github.com/repos/openziti/ziti/releases/latest | jq -r .assets[].name | grep "linux-amd64")
+```
+
+To enroll nginx-aks-id-01.jwt and get nginx-aks-id-01.json as a return. If this JSON object is correctly generated, you've enrolled your **Endpoint** correctly (see image below)! 
+
+Enroll dowloaded JWT 
+```bash
+./ziti edge enroll -j nginx-aks-id-01.jwt -o nginx-aks-id-01.json
+```
+
+---
+
 ## Build Client Go HTTP App
 
 Clone OpenZiti Golang SDK Repo on your client
 
 Note: Need to install gcc compiler if not already installed
-```bash
+```powershell
 git clone https://github.com/openziti/sdk-golang.git
 cd sdk-golang/example
 mkdir build
@@ -191,13 +202,33 @@ go mod tidy
 go build -o build ./...
 ```
 Test Client app
-```bash
+```powershell
 build/curlz
 Insufficient arguments provided
 
 Usage: ./curlz <serviceName> <identityFile>
 ```
 If you get the error like above, then the client app was built successfully
+
+---
+
+## Enroll Client App Identity
+
+Install Ziti Cli first.
+```powershell
+wget $($(Invoke-RestMethod -uri https://api.github.com/repos/openziti/ziti/releases/latest).assets |  where-object { $_.name -match "windows"}).browser_download_url -UseBasicParsing -OutFile $($(Invoke-RestMethod -uri https://api.github.com/repos/openziti/ziti/releases/latest).assets |  where-object { $_.name -match "windows"}).name
+
+Expand-Archive -LiteralPath $($(Invoke-RestMethod -uri https://api.github.com/repos/openziti/ziti/releases/latest).assets |  where-object { $_.name -match "windows"}).name -DestinationPath ./
+
+rm $($(Invoke-RestMethod -uri https://api.github.com/repos/openziti/ziti/releases/latest).assets |  where-object { $_.name -match "windows"}).name
+```
+
+To enroll nginx-aks-client-01.jwt and get nginx-aks-client-01.json as a return. If this JSON object is correctly generated, you've enrolled your **Endpoint** correctly (see image below)! 
+
+Enroll dowloaded JWT 
+```bash
+./ziti edge enroll -j nginx-aks-client-01.jwt -o nginx-aks-client-01.json
+```
 
 ---
 
