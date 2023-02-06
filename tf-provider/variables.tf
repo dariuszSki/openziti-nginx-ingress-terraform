@@ -4,6 +4,6 @@ variable "resource_group_location" {
 }
 
 variable "resource_group_name_prefix" {
-  default     = "rg_dariusz_test"
-  description = "Prefix of the resource group name that's combined with a random ID so name is unique in your Azure subscription."
+  default     = "nginx_module_rg"
+  description = "Prefix of the resource group name"
 }
