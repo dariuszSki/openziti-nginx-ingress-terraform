@@ -7,3 +7,6 @@ variable "resource_group_name_prefix" {
   default     = "nginx_module_rg"
   description = "Prefix of the resource group name"
 }
+
+// variable "aks_service_principal_app_id" {}
+// variable "aks_service_principal_client_secret" {}
