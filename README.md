@@ -370,3 +370,49 @@ See more [here](https://support.netfoundry.io/hc/en-us/articles/360045503311-Cre
 ### NetFoundry Teams (Free Tier)
 
 NetFoundry has created a Teams tier that is free up to 10 nodes. All examples that include this in their ingredients can be done with less than 10 nodes and can be done for free!
+
+
+Terraform:
+RESOURCE_GROUP_NAME=tfstate
+STORAGE_ACCOUNT_NAME=tfstate20823
+CONTAINER_NAME=tfstate
+az login --service-principal --username $CLIENT_ID --password $CLIENT_SECRET --tenant $TENANT_ID 
+ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --subscription $SUB_ID --query '[0].value' -o tsv)
+export ARM_ACCESS_KEY=$ACCOUNT_KEY
+terraform plan -var SUB_ID=$SUB_ID
+terraform apply -destroy -target=helm_release.ingress-nginx -var $SUB_ID
+
+
+Kubernetes:
+build/kubeztl get pods --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json  -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx --watch
+
+build/kubeztl get pods --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -n ingress-nginx
+build/kubeztl get pods --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -n ingress-nginx
+build/kubeztl logs --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -n ingress-nginx  akssand-nginx-ingress-nginx-controller-7c8866f8fb-5kj42
+
+
+build/kubeztl describe ing --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -n ingress-nginx  --show-events=true
+
+build/kubeztl get svc --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json --all-namespaces
+build/kubeztl get deploy --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -n ingress-nginx
+build/kubeztl edit deploy --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -n ingress-nginx akssand-nginx-ingress-nginx-controller
+annotation key "meta.helm.sh/release-name" must equal "nginx-ingress": current value is "akssand-nginx"; 
+annotation key "meta.helm.sh/release-namespace" must equal "default": current value is "nginx-ingress";
+
+
+Steps:
+Mattermost:
+helm repo add mattermost https://helm.mattermost.com
+
+
+build/kubeztl create configmap nginx-configuration --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -n nginx-ingress --from-file=./nginx-controller-configmap-custom.yaml
+build/kubeztl delete configmap nginx-configuration --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -n nginx-ingress
+
+build/kubeztl  exec --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -n default nginx-ingress-nginx-ingress-5796bf945b-rd4wb -- cat ../../ngx_ziti_module.so /etc/nginx/modules/ngx_ziti_module.so 
+
+build/kubeztl cp  --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json ../../ngx_ziti_module.so nginx-ingress-nginx-ingress-5796bf945b-rd4wb:/etc/nginx/modules/ngx_ziti_module.so
+
+build/kubeztl  exec --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -i nginx-ingress-nginx-ingress-5796bf945b-rd4wb -- ls /etc/nginx/modules/   
+
+cat ../../ngx_ziti_module.so | build/kubeztl  exec --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -i nginx-ingress-nginx-ingress-5796bf945b-rd4wb --  tee /usr/lib/nginx/modules/ngx_ziti_module.so > /dev/null
+
