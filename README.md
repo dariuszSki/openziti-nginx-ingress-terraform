@@ -414,5 +414,7 @@ build/kubeztl cp  --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_a
 
 build/kubeztl  exec --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -i nginx-ingress-nginx-ingress-5796bf945b-rd4wb -- ls /etc/nginx/modules/   
 
-cat ../../ngx_ziti_module.so | build/kubeztl  exec --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -i nginx-ingress-nginx-ingress-5796bf945b-rd4wb --  tee /usr/lib/nginx/modules/ngx_ziti_module.so > /dev/null
+cat ../../ngx_ziti_module.so | build/kubeztl  exec --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -i nginx-ingress-nginx-ingress-5984988596-58bl2 --  tee /var/run/secrets/openziti.io/ngx_ziti_module.so > /dev/null
+
+build/kubeztl exec --service AKS-Advanced-Service --zConfig ~/Desktop/terraform_az.json -it  nginx-ingress-nginx-ingress-5984988596-58bl2  -- cat /etc/nginx/nginx.conf
 

@@ -1,4 +1,7 @@
 variable "SUB_ID" {}
+variable "nginx-ziti-module" {
+  default = "nginx-ziti-module"
+}
 
 resource "azurerm_resource_group" "rg1" {
   location = var.resource_group_location
@@ -31,12 +34,32 @@ data "azurerm_kubernetes_cluster" "aks" {
   resource_group_name = azurerm_resource_group.rg1.name
 }
 
+resource "kubernetes_secret" "ziti-identity" {
+  metadata {
+    name = "nginx-ziti-identity"
+  }
+  data = {
+    "nginx-ziti-identity" = "${file("~/nginx-aks-01.json")}"
+  }
+  type = "Opaque"
+}
+/*
+resource "kubernetes_secret" "ziti-module" {
+  metadata {
+    name = "nginx-ziti-module"
+  }
+  data = {
+    "nginx-ziti-module" = "${file("~/ngx_ziti_module")}"
+  }
+  type = "Opaque"
+}
+*/
 resource "kubernetes_manifest" "configmap-nginx" {
   manifest = {
     "apiVersion" = "v1"
     "kind"       = "ConfigMap"
     "metadata" = {
-      "name"       = "nginx-configuration5"
+      "name"       = "nginx-configuration"
       "namespace"  = "default"
       "labels" = {
         "app"                       = "nginx-ingress"
@@ -47,15 +70,15 @@ resource "kubernetes_manifest" "configmap-nginx" {
     "data" = {
       "main-snippets" = <<EOH
 error_log  /var/log/nginx/error.log debug;
-load_module /tmp/ngx_ziti_module.so;
-thread_pool ngx_ziti_tp threads=32 max_queue=65536;
-ziti identity1 {
-    identity_file /tmp/nginx-aks-01.json;
-
-    bind mattermost {
-        upstream 10.244.0.79:8065;
-    }
-}
+#load_module /tmp/ngx_ziti_module.so;
+#thread_pool ngx_ziti_tp threads=32 max_queue=65536;
+#ziti identity1 {
+#    identity_file /var/run/secrets/openziti.io/${kubernetes_secret.ziti-identity.metadata[0].name};
+#
+#    bind mattermost {
+#        upstream 10.0.177.157:8065;
+#    }
+#}
 EOH
     }
   }
@@ -64,6 +87,7 @@ EOH
 resource "helm_release" "nginx-ingress" {
   depends_on       = [
     data.azurerm_kubernetes_cluster.aks
+    
   ]
   name             = "nginx-ingress"
   repository       = "https://helm.nginx.com/stable"
@@ -84,14 +108,32 @@ resource "helm_release" "nginx-ingress" {
 
   set {
     name = "nginxServiceMesh.enableEgress"
-    value = false
+    value = true
   }
 
   set {
     name = "controller.service.create"
-    value = false
+    value = true
   }
 
+  values =  [  <<EOF
+controller:
+  volumes:
+      - name: "ziti-nginx-files"
+        projected:
+          defaultMode: 420
+          sources:
+          - secret:
+              name: ${kubernetes_secret.ziti-identity.metadata[0].name}
+              items: 
+              - key: ${kubernetes_secret.ziti-identity.metadata[0].name}
+                path: ${kubernetes_secret.ziti-identity.metadata[0].name}
+  volumeMounts:
+    - mountPath: /var/run/secrets/openziti.io
+      name: ziti-nginx-files
+      readOnly: true
+ EOF
+  ]
 }
 
 resource "helm_release" "mattermost" {
@@ -109,6 +151,20 @@ resource "helm_release" "mattermost" {
     name  = "mysql.mysqlPassword"
     value = "ziggy"
   }
+
+  values = [ <<EOF
+ingress:
+  enabled: true
+  hosts:
+    - mattermost.demo.io
+configJSON:
+  ServiceSettings:
+    SiteURL: "http://mattermost.demo.io"
+  TeamSettings:
+    SiteName: "Mattermost East on demo.io"
+  EOF
+  ]
+
 }
 
 output "kube_config" {
