@@ -1,6 +1,6 @@
 resource "azurerm_kubernetes_cluster" "aks" {
   location                = var.location
-  name                    = var.cluster_name
+  name                    = "${var.cluster_name}${var.location}"
   resource_group_name     = var.rg_name
   dns_prefix              = var.dns_prefix
   private_cluster_enabled = true
@@ -12,7 +12,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   default_node_pool {
     name            = "agentpool"
     vm_size         = "Standard_F4s_v2"
-    node_count      = var.agent_count
+    node_count      = var.node_count
     os_disk_size_gb = 30
     vnet_subnet_id  = var.service_subnet_id
   }

@@ -1,5 +1,5 @@
 resource "azurerm_public_ip" "public_ip" {
-  name                = "${var.vm_prefix}-public-ip"
+  name                = "${var.vm_prefix}${var.location}-public-ip"
   location            = var.location
   resource_group_name = var.rg_name
   allocation_method   = "Dynamic"
@@ -9,12 +9,12 @@ resource "azurerm_public_ip" "public_ip" {
 }
 
 resource "azurerm_network_interface" "main" {
-  name                = "${var.vm_prefix}-nic"
+  name                = "${var.vm_prefix}${var.location}-nic"
   location            = var.location
   resource_group_name = var.rg_name
 
   ip_configuration {
-    name                          = "${var.vm_prefix}-ip"
+    name                          = "${var.vm_prefix}${var.location}-ip"
     subnet_id                     = var.service_subnet_id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.public_ip.id
@@ -24,7 +24,7 @@ resource "azurerm_network_interface" "main" {
 }
 
 resource "azurerm_virtual_machine" "main" {
-  name                  = "${var.vm_prefix}-vm"
+  name                  = "${var.vm_prefix}${var.location}-vm"
   location              = var.location
   resource_group_name   = var.rg_name
   network_interface_ids = [azurerm_network_interface.main.id]
@@ -47,7 +47,7 @@ resource "azurerm_virtual_machine" "main" {
   }
 
   storage_os_disk {
-    name              = "${var.vm_prefix}-osdisk"
+    name              = "${var.vm_prefix}${var.location}-osdisk"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"

@@ -8,5 +8,7 @@ variable "resource_group_name_prefix" {
   description = "Prefix of the resource group name"
 }
 
-// variable "aks_service_principal_app_id" {}
-// variable "aks_service_principal_client_secret" {}
+variable "nginx-ziti-module" {
+  default = "nginx-ziti-module"
+}
+

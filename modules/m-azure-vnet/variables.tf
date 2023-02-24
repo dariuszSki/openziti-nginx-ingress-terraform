@@ -1,2 +1,2 @@
-variable "resource_group_location" {}
-variable "resource_group_name_prefix" {}
+variable "location" {}
+variable "rg_name" {}

@@ -1,0 +1,1 @@
+variable "nginx_ziti_identity" {}

@@ -374,12 +374,18 @@ NetFoundry has created a Teams tier that is free up to 10 nodes. All examples th
 
 Terraform:
 RESOURCE_GROUP_NAME=tfstate
-STORAGE_ACCOUNT_NAME=tfstate20823
+STORAGE_ACCOUNT_NAME=tfstate52xb5
 CONTAINER_NAME=tfstate
-az login --service-principal --username $CLIENT_ID --password $CLIENT_SECRET --tenant $TENANT_ID 
-ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --subscription $SUB_ID --query '[0].value' -o tsv)
+ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --subscription $ARM_SUBSCRIPTION_ID --query '[0].value' -o tsv)
 export ARM_ACCESS_KEY=$ACCOUNT_KEY
-terraform plan -var SUB_ID=$SUB_ID
+az aks get-credentials --name akssandeastus -g nginx_module_rg --subscription  $ARM_SUBSCRIPTION_ID
+
+
+
+az login --service-principal --username $CLIENT_ID --password $CLIENT_SECRET --tenant $TENANT_ID 
+terraform plan -out aks -var SUB_ID=$ARM_SUBSCRIPTION_ID
+terraform apply "aks"
+
 terraform apply -destroy -target=helm_release.ingress-nginx -var $SUB_ID
 
 

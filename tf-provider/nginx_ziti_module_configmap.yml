@@ -1,5 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ngx_ziti_module
-binary_data: "${filebase64(~/ngx_ziti_module.so)}"
