@@ -1,6 +1,5 @@
----
-title: AKS API with NGINX Ziti Module
----
+
+# Secure AKS API with NGINX Ziti Module
 
 ## Prerequisites
 
