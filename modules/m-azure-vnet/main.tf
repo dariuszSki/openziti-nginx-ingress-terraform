@@ -4,7 +4,9 @@ resource "azurerm_virtual_network" "vnet1" {
     resource_group_name = var.rg_name
     address_space       = ["10.10.0.0/16"]
 
-    tags = {}
+    tags = {
+        Environment = var.tags
+    }
 }
 
 resource "azurerm_subnet" "service-subnet" {

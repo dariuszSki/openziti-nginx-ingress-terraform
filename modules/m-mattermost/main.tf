@@ -12,14 +12,4 @@ resource "helm_release" "mattermost" {
     name  = "mysql.mysqlPassword"
     value = "ziggy"
   }
-
-  values = [ <<EOF
-configJSON:
-  ServiceSettings:
-    SiteURL: "http://mattermost.demo.io"
-  TeamSettings:
-    SiteName: "Mattermost East on demo.io"
-  EOF
-  ]
-
 }

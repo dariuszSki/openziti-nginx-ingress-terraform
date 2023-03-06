@@ -49,8 +49,8 @@ controller:
         ziti identity1 {
           identity_file /var/run/secrets/openziti.io/${kubernetes_secret.ziti-identity.metadata[0].name};
 
-          bind mattermost {
-            upstream 10.244.0.18:8065;
+          bind k8s-api {
+            upstream kubernetes.default:443;
           }
         }
   volumes:
