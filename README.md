@@ -29,7 +29,7 @@ Tested with OpenZiti Network deployed  the LKE Cluster using Terraform.
 
 ## Create NGNIX Server and ZDE Client Identities
 
-Follow the guide @[Create Identities](../../learn/core-concepts/identities/overview#creating-an-identity)
+Follow the guide @[Create Identities](https://docs.openziti.io/docs/learn/core-concepts/identities/overview#creating-an-identity)
 
 ***Note***
 client name = `client-nginx` with `Attribute`: `#clients`,  server module name = `server-nginx` with `Attribute`: `#servers`
