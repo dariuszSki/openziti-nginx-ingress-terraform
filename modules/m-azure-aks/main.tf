@@ -10,7 +10,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   api_server_access_profile {
-    authorized_ip_ranges = [""]
+    authorized_ip_ranges = var.authorized_source_ip_list
   }
 
   default_node_pool {
@@ -38,4 +38,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
     type = "SystemAssigned"
   }
 
+}
+
+resource "local_sensitive_file" "kubeconfig" {
+  depends_on   = [azurerm_kubernetes_cluster.aks]
+  filename     = "./kube-config"
+  content      = azurerm_kubernetes_cluster.aks.kube_config_raw
+  file_permission = 0600
 }

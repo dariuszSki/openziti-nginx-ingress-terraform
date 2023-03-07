@@ -87,13 +87,13 @@ Deploy the AKS Infrustructure in Azure using terraform. The terraform code is lo
 
 You will need to set a few environmental variables for Azure Authentication and Authorization.
 
-**$env:ARM_SUBSCRIPTION_ID** = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+**export ARM_SUBSCRIPTION_ID** = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
-**$env:ARM_CLIENT_ID** = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+**export ARM_CLIENT_ID** = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
-**$env:ARM_CLIENT_SECRET** = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+**export ARM_CLIENT_SECRET** = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
-**$env:ARM_TENANT_ID** = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+**export ARM_TENANT_ID** = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 Steps to follow to run terraform.
 ```shell
@@ -145,9 +145,9 @@ We will use kubectl to interact with the AKS API Controll Plane to list, create,
 # Configure your local kube configuration file using azure cli
 az login # if not already logged in
 # Windows
-$env:RG_NAME = 'resource group name'
-$env:ARM_SUBSCRIPTION_ID =  'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-az aks get-credentials --resource-group $env:RG_NAME --name {cluster_name} --subscription $env:ARM_SUBSCRIPTION_ID
+export RG_NAME = 'resource group name'
+export ARM_SUBSCRIPTION_ID =  'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+az aks get-credentials --resource-group $RG_NAME --name {cluster_name} --subscription $ARM_SUBSCRIPTION_ID
 
 # check the installed context in the kubectl config file
 kubectl config  get-contexts

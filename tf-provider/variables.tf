@@ -23,3 +23,8 @@ variable "include_aks_mm" {
 variable "include_aks_nginx" {
   default = false
 }
+
+variable "authorized_source_ip_list" {
+  type = list
+  default = []
+}

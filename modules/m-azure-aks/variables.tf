@@ -29,4 +29,7 @@ variable "private" {
 variable "ssh_public_key" {
   default = "~/.ssh/id_rsa.pub"
 }
+variable "authorized_source_ip_list" {
+  type = list
+}
 

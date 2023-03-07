@@ -11,12 +11,13 @@ module "vnet1" {
 }
 
 module "aks1" {
-  source            = "../modules/m-azure-aks"
-  location          = azurerm_resource_group.rg1.location
-  rg_name           = azurerm_resource_group.rg1.name
-  service_subnet_id = module.vnet1.service_subnet_id
-  node_count        = 2
-  private           = false
+  source                    = "../modules/m-azure-aks"
+  location                  = azurerm_resource_group.rg1.location
+  rg_name                   = azurerm_resource_group.rg1.name
+  service_subnet_id         = module.vnet1.service_subnet_id
+  node_count                = 2
+  private                   = false
+  authorized_source_ip_list = var.authorized_source_ip_list
 }
 
 output "cluster_name" {
