@@ -43,7 +43,9 @@ output "cluster_public_fqdn" {
 
 module "mattermost" {
   depends_on = [
-    module.aks1
+    module.aks1,
+    module.vnet1,
+    azurerm_resource_group.rg1
   ]
   count        = var.include_aks_mm ? 1 : 0
   source       = "../modules/m-mattermost"
@@ -51,9 +53,12 @@ module "mattermost" {
 
 module "nginx1" {
   depends_on = [
-    module.aks1
+    module.aks1,
+    module.vnet1,
+    azurerm_resource_group.rg1
   ]
   count               = var.include_aks_nginx ? 1 : 0
   source              = "../modules/m-nginx-ingress"
+  replica_count       = 2
   nginx_ziti_identity = "${file("./server-nginx.json")}"
 }
