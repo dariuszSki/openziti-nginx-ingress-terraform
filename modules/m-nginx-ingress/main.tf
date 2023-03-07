@@ -46,13 +46,13 @@ controller:
        
         thread_pool ngx_ziti_tp threads=32 max_queue=65536;
 
-        ziti identity1 {
-          identity_file /var/run/secrets/openziti.io/${kubernetes_secret.ziti-identity.metadata[0].name};
+        #ziti identity1 {
+        #  identity_file /var/run/secrets/openziti.io/${kubernetes_secret.ziti-identity.metadata[0].name};
 
-          bind k8s-api {
-            upstream kubernetes.default:443;
-          }
-        }
+        #  bind k8s-api {
+        #    upstream kubernetes.default:443;
+        #  }
+        #}
   volumes:
       - name: "ziti-nginx-files"
         projected:
