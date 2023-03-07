@@ -33,6 +33,11 @@ resource "helm_release" "nginx-ingress" {
     value = 1
   }
 
+  set {
+    name = "controller.replicaCount"
+    value = var.replica_count
+  }
+
   values =  [  <<EOF
 controller:
   service:
